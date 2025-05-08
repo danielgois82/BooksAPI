@@ -1,3 +1,5 @@
+# flask --app main.py run
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -45,3 +47,49 @@ def add_book():
     db.session.add(new_book)
     db.session.commit()
     return jsonify({"message": "Livro adicionado com sucesso!"}), 201
+
+@app.route("/books", methods=["GET"])
+def get_books():
+    books = Book.query.all()
+    result = [
+        {
+            "id":book.id,
+            "author":book.author,
+            "gender":book.gender,
+            "year":book.year,
+            "title":book.title
+        } for book in books
+    ]
+    return jsonify(result)
+
+@app.route("/books/<int:book_id>", methods=["GET"])
+def get_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    return jsonify({
+        "id":book.id,
+        "author":book.author,
+        "gender":book.gender,
+        "year":book.year,
+        "title":book.title
+    })
+
+@app.route("/books/<int:book_id>", methods=["PUT"])
+def update_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    data = request.get_json()
+
+    book.author = data.get("author", book.author)
+    book.gender = data.get("gender", book.gender)
+    book.year = data.get("year", book.year)
+    book.title = data.get("title", book.title)
+
+    db.session.commit()
+    return jsonify({"message":"Livro atualizado com sucesso!"})
+
+@app.route("/books/<int:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+    book = Book.query.get_or_404(book_id)
+    db.session.delete(book)
+    db.session.commit()
+    return jsonify({"message":"Livro removido com sucesso!"})
+
